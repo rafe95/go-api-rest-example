@@ -45,6 +45,11 @@ func UpdateLaptop(c *gin.Context) {
 }
 
 func AddLaptop(c *gin.Context) {
+	var laptop Laptop
+	c.BindJSON(&laptop)
+
+	db.Create(&laptop)
+	c.JSON(200, laptop)
 }
 
 func GetAll(c *gin.Context) {
