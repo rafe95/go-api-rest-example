@@ -64,4 +64,12 @@ func GetAll(c *gin.Context) {
 }
 
 func GetLaptop(c *gin.Context) {
+	id := c.Params.ByName("id")
+	var laptop Laptop
+	if err := db.Where("id = ?", id).First(&laptop).Error; err != nil {
+		c.AbortWithStatus(404)
+		fmt.Println(err)
+	} else {
+		c.JSON(200, laptop)
+	}
 }
