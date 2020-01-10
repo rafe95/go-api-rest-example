@@ -40,6 +40,11 @@ func main() {
 }
 
 func DeleteLaptop(c *gin.Context) {
+	id := c.Params.ByName("id")
+	var laptop Laptop
+	d := db.Where("id = ?", id).Delete(&laptop)
+	fmt.Println(d)
+	c.JSON(200, gin.H{"id #" + id: "deleted"})
 }
 
 func UpdateLaptop(c *gin.Context) {
