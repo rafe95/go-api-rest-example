@@ -43,6 +43,17 @@ func DeleteLaptop(c *gin.Context) {
 }
 
 func UpdateLaptop(c *gin.Context) {
+	var laptop Laptop
+	id := c.Params.ByName("id")
+
+	if err := db.Where("id = ?", id).First(&laptop).Error; err != nil {
+		c.AbortWithStatus(404)
+		fmt.Println(err)
+	}
+	c.BindJSON(&laptop)
+
+	db.Save(&laptop)
+	c.JSON(200, laptop)
 }
 
 func AddLaptop(c *gin.Context) {
