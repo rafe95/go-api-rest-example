@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
@@ -53,6 +54,13 @@ func AddLaptop(c *gin.Context) {
 }
 
 func GetAll(c *gin.Context) {
+	var all []Laptop
+	if err := db.Find(&all).Error; err != nil {
+		c.AbortWithStatus(404)
+		fmt.Println(err)
+	} else {
+		c.JSON(200, all)
+	}
 }
 
 func GetLaptop(c *gin.Context) {
