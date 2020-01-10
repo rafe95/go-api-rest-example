@@ -1,6 +1,9 @@
 package main
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
+)
 
 var db *gorm.DB
 var err error
@@ -22,4 +25,19 @@ func main() {
 
 	defer db.Close()
 
+}
+
+func DeleteLaptop(c *gin.Context) {
+}
+
+func UpdateLaptop(c *gin.Context) {
+}
+
+func AddLaptop(c *gin.Context) {
+}
+
+func GetAll(c *gin.Context) {
+}
+
+func GetLaptop(c *gin.Context) {
 }
