@@ -25,6 +25,17 @@ func main() {
 
 	defer db.Close()
 
+	db.AutoMigrate(&Laptop{})
+
+	r := gin.Default()
+	r.GET("/laptop/", GetAll)
+	r.GET("/laptop/:id", GetLaptop)
+	r.POST("/laptop", AddLaptop)
+	r.PUT("/laptop/:id", UpdateLaptop)
+	r.DELETE("/laptop/:id", DeleteLaptop)
+
+	r.Run(":8080")
+
 }
 
 func DeleteLaptop(c *gin.Context) {
