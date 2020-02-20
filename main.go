@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
+	_ "github.com/lib/pq"
+	"strconv"
 )
 
-var db *gorm.DB
 var err error
 
 type Laptop struct {
@@ -18,74 +18,68 @@ type Laptop struct {
 func main() {
 
 	const CnString = "host=localhost port=5432 user=gorm dbname=laptop_db sslmode=disable password=gormPassword"
-	db, err = gorm.Open("postgres", CnString)
 
+	db, err := sql.Open("postgres", CnString)
 	if err != nil {
 		panic(err)
 	}
-
 	defer db.Close()
 
-	db.AutoMigrate(&Laptop{})
-
 	r := gin.Default()
-	r.GET("/laptop/", GetAll)
-	r.GET("/laptop/:id", GetLaptop)
-	r.POST("/laptop", AddLaptop)
-	r.PUT("/laptop/:id", UpdateLaptop)
-	r.DELETE("/laptop/:id", DeleteLaptop)
+	r.GET("/laptop/", func(c *gin.Context) {
+		sql := `select * from laptop`
+		all, err := db.Query(sql)
+		if err != nil {
+			c.AbortWithStatus(404)
+		} else {
+			c.JSON(200, all)
+		}
+	})
+
+	r.GET("/laptop/:id", func(c *gin.Context) {
+
+		id := c.Params.ByName("id")
+		sql := `select * from laptop where id = ` + id
+		laptop, err := db.Query(sql)
+		if err != nil {
+			c.AbortWithStatus(404)
+		} else {
+			c.JSON(200, laptop)
+		}
+
+	})
+
+	r.POST("/laptop", func(c *gin.Context) {
+
+		var laptop Laptop
+		c.BindJSON(&laptop)
+		id := strconv.Itoa(laptop.ID)
+		sql := `insert into laptop values(` + id + `,` + laptop.Brand + `,` + laptop.Model + `)`
+		db.Query(sql)
+		c.JSON(200, laptop)
+
+	})
+
+	r.PUT("/laptop/:id", func(c *gin.Context) {
+
+		id := c.Params.ByName("id")
+		var laptop Laptop
+		c.BindJSON(&laptop)
+
+		sql := `update laptop set brand =` + laptop.Brand + `,` + `model =` + laptop.Model + ` where id =` + id
+
+		db.Query(sql)
+		c.JSON(200, laptop)
+
+	})
+
+	r.DELETE("/laptop/:id", func(c *gin.Context) {
+		id := c.Params.ByName("id")
+		sql := `delete from laptop where id = ` + id
+		db.Query(sql)
+		c.JSON(200, gin.H{})
+	})
 
 	r.Run(":8080")
 
-}
-
-func DeleteLaptop(c *gin.Context) {
-	id := c.Params.ByName("id")
-	var laptop Laptop
-	d := db.Where("id = ?", id).Delete(&laptop)
-	fmt.Println(d)
-	c.JSON(200, gin.H{"id #" + id: "deleted"})
-}
-
-func UpdateLaptop(c *gin.Context) {
-	var laptop Laptop
-	id := c.Params.ByName("id")
-
-	if err := db.Where("id = ?", id).First(&laptop).Error; err != nil {
-		c.AbortWithStatus(404)
-		fmt.Println(err)
-	}
-	c.BindJSON(&laptop)
-
-	db.Save(&laptop)
-	c.JSON(200, laptop)
-}
-
-func AddLaptop(c *gin.Context) {
-	var laptop Laptop
-	c.BindJSON(&laptop)
-
-	db.Create(&laptop)
-	c.JSON(200, laptop)
-}
-
-func GetAll(c *gin.Context) {
-	var all []Laptop
-	if err := db.Find(&all).Error; err != nil {
-		c.AbortWithStatus(404)
-		fmt.Println(err)
-	} else {
-		c.JSON(200, all)
-	}
-}
-
-func GetLaptop(c *gin.Context) {
-	id := c.Params.ByName("id")
-	var laptop Laptop
-	if err := db.Where("id = ?", id).First(&laptop).Error; err != nil {
-		c.AbortWithStatus(404)
-		fmt.Println(err)
-	} else {
-		c.JSON(200, laptop)
-	}
 }
