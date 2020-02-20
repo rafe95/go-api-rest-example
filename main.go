@@ -27,7 +27,7 @@ func main() {
 
 	r := gin.Default()
 	r.GET("/laptop/", func(c *gin.Context) {
-		sql := `select * from laptop`
+		sql := `select * from laptops`
 		all, err := db.Query(sql)
 		if err != nil {
 			c.AbortWithStatus(404)
@@ -39,7 +39,7 @@ func main() {
 	r.GET("/laptop/:id", func(c *gin.Context) {
 
 		id := c.Params.ByName("id")
-		sql := `select * from laptop where id = ` + id
+		sql := `select * from laptops where id = ` + id
 		laptop, err := db.Query(sql)
 		if err != nil {
 			c.AbortWithStatus(404)
@@ -54,7 +54,7 @@ func main() {
 		var laptop Laptop
 		c.BindJSON(&laptop)
 		id := strconv.Itoa(laptop.ID)
-		sql := `insert into laptop values(` + id + `,` + laptop.Brand + `,` + laptop.Model + `)`
+		sql := `insert into laptops values(` + id + `,` + laptop.Brand + `,` + laptop.Model + `)`
 		db.Query(sql)
 		c.JSON(200, laptop)
 
@@ -66,7 +66,7 @@ func main() {
 		var laptop Laptop
 		c.BindJSON(&laptop)
 
-		sql := `update laptop set brand =` + laptop.Brand + `,` + `model =` + laptop.Model + ` where id =` + id
+		sql := `update laptops set brand =` + laptop.Brand + `,` + `model =` + laptop.Model + ` where id =` + id
 
 		db.Query(sql)
 		c.JSON(200, laptop)
@@ -75,7 +75,7 @@ func main() {
 
 	r.DELETE("/laptop/:id", func(c *gin.Context) {
 		id := c.Params.ByName("id")
-		sql := `delete from laptop where id = ` + id
+		sql := `delete from laptops where id = ` + id
 		db.Query(sql)
 		c.JSON(200, gin.H{})
 	})
