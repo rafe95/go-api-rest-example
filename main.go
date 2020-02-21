@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-	"strconv"
 )
 
 var err error
@@ -27,57 +26,95 @@ func main() {
 
 	r := gin.Default()
 	r.GET("/laptop/", func(c *gin.Context) {
-		sql := `select * from laptops`
-		all, err := db.Query(sql)
+		sql := "SELECT * FROM laptops"
+		rows, _ := db.Query(sql)
+		all := []Laptop{}
+
+		var single Laptop
+		for rows.Next() {
+			var (
+				id    int
+				model string
+				brand string
+			)
+			rows.Scan(&id, &brand, &model)
+			single = Laptop{
+				ID:    id,
+				Brand: brand,
+				Model: model,
+			}
+			all = append(all, single)
+
+		}
+
 		if err != nil {
 			c.AbortWithStatus(404)
 		} else {
-			c.JSON(200, all)
+			if len(all) == 0 {
+				c.JSON(404, "404 Not found!")
+			} else {
+				c.JSON(200, all)
+			}
 		}
 	})
 
 	r.GET("/laptop/:id", func(c *gin.Context) {
 
-		id := c.Params.ByName("id")
-		sql := `select * from laptops where id = ` + id
-		laptop, err := db.Query(sql)
+		queryId := c.Params.ByName("id")
+		sql := "SELECT * FROM laptops WHERE id =" + queryId
+		rows, err := db.Query(sql)
+		defer rows.Close()
+
 		if err != nil {
 			c.AbortWithStatus(404)
 		} else {
-			c.JSON(200, laptop)
-		}
+			var single Laptop
+			var (
+				id    int
+				brand string
+				model string
+			)
 
+			rows.Next()
+			rows.Scan(&id, &brand, &model)
+			single = Laptop{
+				ID:    id,
+				Brand: brand,
+				Model: model,
+			}
+			if single.ID == 0 {
+				c.JSON(404, "404 Not found")
+
+			} else {
+				c.JSON(200, single)
+			}
+
+		}
 	})
 
-	r.POST("/laptop", func(c *gin.Context) {
-
+	r.POST("/laptop/", func(c *gin.Context) {
 		var laptop Laptop
 		c.BindJSON(&laptop)
-		id := strconv.Itoa(laptop.ID)
-		sql := `insert into laptops values(` + id + `,` + laptop.Brand + `,` + laptop.Model + `)`
-		db.Query(sql)
-		c.JSON(200, laptop)
+		sql := "INSERT INTO laptops (id, brand, model) VALUES ( $1, $2, $3)"
+		db.Exec(sql, laptop.ID, laptop.Brand, laptop.Model)
+		c.JSON(201, laptop)
 
 	})
 
 	r.PUT("/laptop/:id", func(c *gin.Context) {
-
-		id := c.Params.ByName("id")
 		var laptop Laptop
 		c.BindJSON(&laptop)
-
-		sql := `update laptops set brand =` + laptop.Brand + `,` + `model =` + laptop.Model + ` where id =` + id
-
-		db.Query(sql)
+		sql := "UPDATE laptops SET brand = $1, model = $2 WHERE id = $3"
+		db.Exec(sql, laptop.Brand, laptop.Model, laptop.ID)
 		c.JSON(200, laptop)
 
 	})
 
 	r.DELETE("/laptop/:id", func(c *gin.Context) {
 		id := c.Params.ByName("id")
-		sql := `delete from laptops where id = ` + id
-		db.Query(sql)
-		c.JSON(200, gin.H{})
+		sql := "DELETE FROM laptops WHERE id = $1"
+		db.Exec(sql, id)
+		c.JSON(200, gin.H{"msg": "Element with id:" + id + " has been deleted"})
 	})
 
 	r.Run(":8080")
