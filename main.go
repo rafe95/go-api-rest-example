@@ -2,8 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"strconv"
 )
 
 var err error
@@ -16,7 +18,27 @@ type Laptop struct {
 
 func main() {
 
-	const CnString = "host=localhost port=5432 user=gorm dbname=laptop_db sslmode=disable password=gormPassword"
+	var (
+		host     string
+		port     int
+		user     string
+		dbname   string
+		sslmode  string
+		password string
+		appPort  int
+	)
+
+	flag.StringVar(&host, "host", "localhost", "Db host address")
+	flag.IntVar(&port, "port", 5432, "Host connection port")
+	flag.StringVar(&user, "user", "gorm", "The username of the database owner")
+	flag.StringVar(&dbname, "db", "laptop_db", "Database name on host")
+	flag.StringVar(&sslmode, "ssl", "disable", "SSL connection mode, default disable")
+	flag.StringVar(&password, "pwd", "gormPassword", "Password for the database user owner")
+	flag.IntVar(&appPort, "apprt", 8080, "Port for running LaptopAPI")
+	flag.Usage()
+	flag.Parse()
+
+	var CnString = "host=" + host + " port=" + strconv.Itoa(port) + " user=" + user + " dbname=" + dbname + " sslmode=" + sslmode + " password=" + password
 
 	db, err := sql.Open("postgres", CnString)
 	if err != nil {
@@ -117,6 +139,6 @@ func main() {
 		c.JSON(200, gin.H{"msg": "Element with id:" + id + " has been deleted"})
 	})
 
-	r.Run(":8080")
+	r.Run(":" + strconv.Itoa(appPort))
 
 }
