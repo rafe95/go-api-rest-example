@@ -1,2 +1,2 @@
 # go-api-rest-example
-REST API with Gingonic and Gorm
+REST API with Gingonic without ORM
